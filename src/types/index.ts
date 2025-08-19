@@ -30,8 +30,8 @@ interface IOrder {
   email: string;
   phone: string;
   address: string;
-  total: TPrice;
-  items: TOrderProductItem[];
+  formErrors: TFormErrors;
+  validateOrder(formName: string): boolean;
   getOrder?(): IOrder;
 }
 
@@ -47,4 +47,6 @@ type TOrderAddress = Pick<IOrder, 'payment' | 'address'>;
 
 type TOrderContacts = Pick<IOrder, 'phone' | 'email'>;
 
-type TOrderSuccess = Pick<IOrder, 'total'>;
+type TFormErrors = Partial<Record<keyof TOrderAddress | keyof TOrderContacts, string>>
+
+type TSuccess = Pick<IProductItem, 'price'>;
