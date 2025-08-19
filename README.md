@@ -86,8 +86,6 @@ interface IOrder {
   email: string;
   phone: string;
   address: string;
-  total: TPrice;
-  items: TOrderProductItem[];
 }
 ```
 
@@ -127,10 +125,16 @@ type TOrderAddress = Pick<IOrder, 'payment' | 'address'>;
 type TOrderContacts = Pick<IOrder, 'phone' | 'email'>;
 ```
 
+Объект с текстом ошибок валидации
+
+```Typescript
+type TFormErrors = Partial<Record<keyof TOrderAddress | keyof TOrderContacts, string>>
+```
+
 Данные заказа на экране успешной покупки
 
 ```Typescript
-type TOrderSuccess = Pick<IOrder, 'total'>;
+type TSuccess = Pick<IProductItem, 'price'>;
 ```
 
 ## Архитектура приложения
@@ -224,12 +228,11 @@ type TOrderSuccess = Pick<IOrder, 'total'>;
 - `_email: string` - электронная почта пользователя
 - `_phone: string` - телефон пользователя
 - `_address: string` - адрес доставки
-- `_total: TPrice` - общая стоимость товаров в заказе
-- `_items: TOrderProductItem[]` - массив id товаров, которые пользователь добавил в заказ
 - `events: IEvents` - экземпляр класса `EventEmitter` для инициации событий при изменении данных
 
 Методы класса:
 
+- `validateOrder(formName: string): boolean` - метод проводит валидацию полей по имени формы
 - `getOrder(): IOrder` - возвращает объект с данными заказа готовый для отправки на сервер
 - Сеттеры и геттеры для сохранения и получения данных из полей класса
 
