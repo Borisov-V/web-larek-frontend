@@ -36,7 +36,6 @@ export class OrderForm extends Component<IOrderForm> {
 			const target = event.target as HTMLButtonElement;
 			if (target.type === 'button') {
 				const buttonName = target.name;
-				console.log(target.type)
 				this.events.emit(`${this.formName}:button`, {buttonName});
 			}
 		});
