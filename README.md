@@ -81,11 +81,29 @@ interface IBasketData {
 Данные заказа
 
 ```Typescript
-interface IOrder {
+interface IOrderData {
   payment: 'online' | 'offline';
   email: string;
   phone: string;
   address: string;
+}
+```
+
+Данные ответа от сервера
+
+```Typescript
+export interface IOrderResponse {
+  id: string;
+  total: TPrice;
+}
+```
+
+Данные заказа в корзине
+
+```Typescript
+export interface IBasketOrder {
+  total: TPrice;
+  items: TOrderProductItem[];
 }
 ```
 
@@ -95,22 +113,10 @@ interface IOrder {
 type TPrice = number;
 ```
 
-Данные карточки товара на главной странице
-
-```Typescript
-type TMainPageProductItem = Pick<IProductItem, 'category' | 'image' | 'title' | 'price'>;
-```
-
-Данные карточки товара в корзине
-
-```Typescript
-type TBasketProductItem = Pick<IProductItem, 'title' | 'price'>;
-```
-
 Данные товара в заказе
 
 ```Typescript
-type TOrderProductItem = Pick<IProductItem, 'id'>;
+type TOrderProductItem = string;
 ```
 
 Данные адреса доставки и способа оплаты в заказе
@@ -125,6 +131,18 @@ type TOrderAddress = Pick<IOrder, 'payment' | 'address'>;
 type TOrderContacts = Pick<IOrder, 'phone' | 'email'>;
 ```
 
+Данные вариантов оплаты заказа
+
+```Typescript
+type TPayment = 'card' | 'cash' | null;
+```
+
+Данные заказа для отправки на сервер
+
+```Typescript
+type TOrder = TOrderAddress & TOrderContacts & IBasketOrder;
+```
+
 Объект с текстом ошибок валидации
 
 ```Typescript
@@ -134,7 +152,7 @@ type TFormErrors = Partial<Record<keyof TOrderAddress | keyof TOrderContacts, st
 Данные заказа на экране успешной покупки
 
 ```Typescript
-type TSuccess = Pick<IProductItem, 'price'>;
+type TSuccess = Pick<IOrderResponse, 'total'>;
 ```
 
 ## Архитектура приложения
@@ -197,6 +215,7 @@ type TSuccess = Pick<IProductItem, 'price'>;
 - `setItems(items: IProductItem[]): void` - добавляет массив карточек товаров в свойство `items` и вызывает событие изменения массива
 - `getItems(): IProductItem[]` - возвращает массив карточек товаров из свойства `items`
 - `getItem(itemId: string): IProductItem` - возвращает одну карточку по ее id
+- `setPreview(item: IProductItem): void ` - устанавливает id карточки в свойство preview
 
 #### Класс BasketData
 
@@ -210,12 +229,14 @@ type TSuccess = Pick<IProductItem, 'price'>;
 
 Методы класса:
 
-- `setItem(item: IProductItem): void` - добавляет карточку в массив `items` и вызывает событие изменения массива
+- `addItem(item: IProductItem): void` - добавляет карточку в массив `items` и вызывает событие изменения массива
+- `hasItem(item: IProductItem): boolean` - проверяет наличие карточки в массиве items
 - `getItems(): IProductItem[]` - возвращает массив карточек `items`
 - `getItemsCount(): number` - возвращает количество карточек в корзине
 - `deleteItem(itemId: string): void` - удаляет карточку из массива `items` по ее id и вызывает событие изменения массива.
-- `deleteAll(): void` - очищает массив `items` и вызывает событие изменения массива
+- `reset(): void` - очищает массив `items` и вызывает событие изменения массива
 - `getTotalPrice(): TPrice` - возвращает общую стоимость товаров из массива `items`
+- `getOrder(): IBasketOrder` - возвращает объект с данными заказа
 
 #### Класс OrderData
 
@@ -224,16 +245,19 @@ type TSuccess = Pick<IProductItem, 'price'>;
 
 Свойства класса:
 
-- `_payment: 'online' | 'offline'` - способ оплаты заказа
+- `_payment: TPayment` - способ оплаты заказа
 - `_email: string` - электронная почта пользователя
 - `_phone: string` - телефон пользователя
 - `_address: string` - адрес доставки
+- `formErrors: TFormErrors` - объект с ошибками валидации
 - `events: IEvents` - экземпляр класса `EventEmitter` для инициации событий при изменении данных
 
 Методы класса:
 
 - `validateOrder(formName: string): boolean` - метод проводит валидацию полей по имени формы
-- `getOrder(): IOrder` - возвращает объект с данными заказа готовый для отправки на сервер
+- `setData(data: Partial<IOrderData>)` - устанавливает значения полей класса
+- `getOrder(): IOrderData` - возвращает объект с данными заказа
+- `reset(): void` - сбрасывает все поля объекта на начальные значения
 - Сеттеры и геттеры для сохранения и получения данных из полей класса
 
 ### Компоненты представления
@@ -266,17 +290,17 @@ type TSuccess = Pick<IProductItem, 'price'>;
 Свойства класса:
 
 - `_title: HTMLElement`
+- `_price: HTMLElement`
 - `_image: HTMLImageElement`
 - `_description: HTMLElement`
 - `_category: HTMLElement`
-- `_price: HTMLElement`
 - `_button: HTMLButtonElement`
 
 Методы класса:
 
 - Геттеры и сеттеры для установления и получения значений полей класса
 
-#### Класс BasketView
+#### Класс Basket
 
 Класс отвечает за отображение корзины со списком товаров, которые были в нее добавлены. В конструктор передается DOM элемент темплейта, коллбек для установки слушателя на кнопку.
 
@@ -284,11 +308,13 @@ type TSuccess = Pick<IProductItem, 'price'>;
 
 - `_list: HTMLElement`
 - `_total: HTMLElement`
-- `items: HTMLElement[]`
 - `_button: HTMLButtonElement`
+- `items: HTMLElement[]`
+- `events: IEvents`
 
 Методы класса:
 
+- `indexing(): void` - индексирует элементы списка \_list
 - Сеттеры для установления значений полей класса
 
 #### Класс OrderForm
@@ -297,15 +323,18 @@ type TSuccess = Pick<IProductItem, 'price'>;
 
 Свойства класса:
 
-- `_payment: HTMLInputElement`
-- `_email: HTMLInputElement`
-- `_phone: HTMLInputElement`
-- `_address: HTMLInputElement`
-- `_button: HTMLButtonElement`
-- `_errors: HTMLElement`
+- `inputs: NodeListOf<HTMLInputElement>;`
+- `buttons: NodeListOf<HTMLButtonElement>;`
+- `formName: string;`
+- `_errors: HTMLElement;`
+- `_submit: HTMLButtonElement;`
+- `events: IEvents;`
+- `container: HTMLFormElement;`
 
 Методы класса:
 
+- `getInputValues(): Record<string, string>` - возвращает имя и значение инпута
+- `reset(): void` - сбрасывает все поля формы на начальные значения
 - Сеттеры для установления значений полей класса
 
 #### Класс Success
@@ -314,21 +343,29 @@ type TSuccess = Pick<IProductItem, 'price'>;
 
 Свойства класса:
 
-- `_image: HTMLImageElement`
 - `_title: HTMLElement`
 - `_button: HTMLButtonElement`
 - `_total: HTMLElement`
-
-#### Класс CardContainer
-
-Класс отвечает за отображение галереи с карточками товаров на главной странице.
-
-Свойства класса:
-
-- `_container: HTMLElement`
+- `_events: IEvents;`
 
 Методы класса:
 
+- Сеттеры для установления значений полей класса
+
+#### Класс Page
+
+Класс отвечает за отображение галереи с карточками товаров, установку слушателя на значок корзины, изменение счетчика товаров корзины, а так же за блокировку прокрутки страницы.
+
+Свойства класса:
+
+- `_counter: HTMLElement`
+- `_gallery: HTMLElement`
+- `_basket: HTMLButtonElement`
+- `_wrapper: HTMLElement`
+
+Методы класса:
+
+- `locked(value: boolean)` - блокировка прокрутки страницы
 - Сеттер для добавления массива элементов карточек в контейнер.
 
 ### Слой коммуникации
@@ -350,6 +387,8 @@ type TSuccess = Pick<IProductItem, 'price'>;
 - `basket:changed` - изменение массива товаров в корзине
 - `preview:changed` - изменена карточка для просмотра
 - `order:changed` - изменены данные заказа
+- `order:success` - успешный ответ от сервера
+- `formErrors:change` - изменены данные в объекте с ошибками формы
 
 События представления, генерируются интерфейсом
 
@@ -358,7 +397,11 @@ type TSuccess = Pick<IProductItem, 'price'>;
 - `card:unselect` - выбрана карточка для удаления из корзины
 - `basket:open` - открытие корзины
 - `basket:submit` - нажата кнопка оформить в корзине
-- `form:input` - ввод данных в форме
-- `form:submit` - нажата кнопка submit в форме
+- `address:button` - нажата кнопка в форме address
+- `address:input` - изменено поле input в форме address
+- `address:submit` - нажата кнопка submit в форме address
+- `contacts:input` - изменено поле input в форме contacts
+- `contacts:submit` - нажата кнопка submit в форме contacts
+- `success:close` - нажата кнопка на экране успешной покупки
 - `modal:open` - открытие модального окна
 - `modal:closed` - закрытие модального окна

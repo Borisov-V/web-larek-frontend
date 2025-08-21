@@ -1,4 +1,4 @@
-interface IProductItem {
+export interface IProductItem {
   id: string;
   description: string;
   image: string;
@@ -7,46 +7,56 @@ interface IProductItem {
   price: TPrice;
 }
 
-interface IProductItemsData {
+export interface IProductItemsData {
   items: IProductItem[];
   preview: string | null;
   setItems(items: IProductItem[]): void;
   getItems(): IProductItem[];
   getItem(itemId: string): IProductItem;
+  setPreview(item: IProductItem): void;
 }
 
-interface IBasketData {
+export interface IBasketData {
   items: IProductItem[];
-  setItem(item: IProductItem): void;
+  addItem(item: IProductItem): void;
   getItems(): IProductItem[];
   getItemsCount(): number;
   deleteItem(itemId: string): void;
-  deleteAll(): void;
+  reset(): void;
   getTotalPrice(): TPrice;
 }
 
-interface IOrder {
-  payment: 'online' | 'offline';
+export interface IOrderData {
+  payment: TPayment;
   email: string;
   phone: string;
   address: string;
-  formErrors: TFormErrors;
-  validateOrder(formName: string): boolean;
-  getOrder?(): IOrder;
 }
 
-type TPrice = number;
+export interface IOrderResponse {
+  id: string;
+  total: TPrice;
+}
 
-type TMainPageProductItem = Pick<IProductItem, 'category' | 'image' | 'title' | 'price'>;
+export interface IBasketOrder {
+  total: TPrice;
+  items: TOrderProductItem[];
+}
 
-type TBasketProductItem = Pick<IProductItem, 'title' | 'price'>;
+export type TPrice = number;
 
-type TOrderProductItem = Pick<IProductItem, 'id'>;
+export type TBasketProductItem = Pick<IProductItem, 'title' | 'price'>;
 
-type TOrderAddress = Pick<IOrder, 'payment' | 'address'>;
+export type TOrderProductItem = string;
 
-type TOrderContacts = Pick<IOrder, 'phone' | 'email'>;
+export type TOrderAddress = Pick<IOrderData, 'payment' | 'address'>;
 
-type TFormErrors = Partial<Record<keyof TOrderAddress | keyof TOrderContacts, string>>
+export type TOrderContacts = Pick<IOrderData, 'phone' | 'email'>;
 
-type TSuccess = Pick<IProductItem, 'price'>;
+export type TPayment = 'card' | 'cash' | null;
+
+export type TOrder = TOrderAddress & TOrderContacts & IBasketOrder;
+
+export type TFormErrors = Partial<Record<keyof TOrderAddress | keyof TOrderContacts, string>>
+
+export type TSuccess = Pick<IOrderResponse, 'total'>;
