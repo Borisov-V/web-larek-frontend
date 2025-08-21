@@ -36,11 +36,6 @@ const formAddress = new OrderForm(cloneTemplate(formAddressTemplate), events);
 const formContacts = new OrderForm(cloneTemplate(formContactsTemplate), events);
 const success = new Success(cloneTemplate(successTemplate), events);
 
-
-events.onAll(({ eventName, data }) => {
-	console.log(eventName, data);
-});
-
 events.on('items:changed', () => {
 	page.gallery = productItemsData.getItems().map((item: IProductItem) => {
 		const card = new Card(cloneTemplate(cardCatalogTemplate), {
