@@ -201,8 +201,6 @@ events.on('order:success', (data: IOrderResponse) => {
 
 	orderData.reset();
 	basketData.reset();
-	formAddress.reset();
-	formContacts.reset();
 });
 
 events.on('success:close', () => {
