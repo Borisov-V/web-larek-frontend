@@ -3,7 +3,13 @@ import './scss/styles.scss';
 import { AppApi } from './components/AppApi';
 import { API_URL, CDN_URL } from './utils/constants';
 import { EventEmitter } from './components/base/events';
-import { IOrderResponse, IProductItem, TOrderAddress, TOrderContacts, TPayment } from './types';
+import {
+	IOrderResponse,
+	IProductItem,
+	TOrderAddress,
+	TOrderContacts,
+	TPayment,
+} from './types';
 import { TOrder } from './types';
 import { ProductItemsData, BasketData, OrderData } from './components/AppData';
 import { Modal } from './components/Modal';
@@ -58,20 +64,23 @@ events.on('card:open', (item: IProductItem) => {
 });
 
 events.on('preview:changed', () => {
-  const previewItem = productItemsData.getItem(productItemsData.preview);
-	const hasItem = Boolean(basketData.hasItem(previewItem));
+	const previewItem = productItemsData.getItem(productItemsData.preview);
+	const hasPrice = Boolean(previewItem.price);
+	const hasItem = basketData.hasItem(previewItem);
 
 	const card = new Card(cloneTemplate(cardPreviewTemplate), {
 		onClick() {
-      if (!basketData.hasItem(previewItem)) {
-        events.emit('card:select');
-        card.button = 'Убрать';
-      } else {
-        events.emit('card:unselect', previewItem);
-        card.button = 'В корзину';
-      }
+			if (!basketData.hasItem(previewItem)) {
+				events.emit('card:select');
+				card.button = 'Убрать';
+			} else {
+				events.emit('card:unselect', previewItem);
+				card.button = 'В корзину';
+			}
 		},
 	});
+
+	card.disableButton(!hasPrice);
 
 	modal.render({
 		content: card.render({
@@ -114,11 +123,9 @@ events.on('basket:changed', () => {
 
 	basket.total = basketData.getTotalPrice();
 
-  if (basketData.getItemsCount() < 1) {
-    orderData.reset();
-    formAddress.reset();
-    formContacts.reset();
-  }
+	if (basketData.getItemsCount() < 1) {
+		orderData.reset();
+	}
 });
 
 events.on('card:unselect', (item: IProductItem) => {
@@ -126,78 +133,93 @@ events.on('card:unselect', (item: IProductItem) => {
 });
 
 events.on('basket:submit', () => {
-  modal.render({
-    content: formAddress.render()
-  })
-})
+	modal.render({
+		content: formAddress.render({
+			buttonActive: orderData.payment,
+			inputValues: {
+				address: orderData.address,
+			},
+		}),
+	});
+});
 
 events.on('address:button', (data: Record<string, TPayment>) => {
-  const payment = data.buttonName;
-  orderData.payment = payment;
-  
-  formAddress.valid = orderData.validateOrder('address');
-  formAddress.errors = Object.values(orderData.formErrors).join('; ');
-})
+	const payment = data.buttonName;
+	orderData.payment = payment;
+
+	formAddress.valid = orderData.validateOrder('address');
+	formAddress.errors = Object.values(orderData.formErrors).join('; ');
+});
 
 events.on('address:input', (data: TOrderAddress) => {
-  orderData.setData(data);
-  
-  formAddress.valid = orderData.validateOrder('address');
-  formAddress.errors = Object.values(orderData.formErrors).join('; ');
-})
+	orderData.setData(data);
+
+	formAddress.valid = orderData.validateOrder('address');
+	formAddress.errors = Object.values(orderData.formErrors).join('; ');
+});
 
 events.on('address:submit', () => {
-  modal.render({
-    content: formContacts.render()
-  })
-})
+	modal.render({
+		content: formContacts.render({
+			inputValues: {
+				email: orderData.email,
+				phone: orderData.phone,
+			},
+		}),
+	});
+});
 
 events.on('contacts:input', (data: TOrderContacts) => {
-  orderData.setData(data);
-  
-  formContacts.valid = orderData.validateOrder('contacts');
-  formContacts.errors = Object.values(orderData.formErrors).join('; ');
-})
+	orderData.setData(data);
+
+	formContacts.valid = orderData.validateOrder('contacts');
+	formContacts.errors = Object.values(orderData.formErrors).join('; ');
+});
 
 events.on('contacts:submit', () => {
-  const order: TOrder = {
-    ...orderData.getOrder(),
-    ...basketData.getOrder()
-  }
+	const order: TOrder = {
+		...orderData.getOrder(),
+		...basketData.getOrder(),
+	};
 
-  api.orderItems(order).then((data: IOrderResponse) => {
-    events.emit('order:success', data);
-  })
-})
+	api
+		.orderItems(order)
+		.then((data: IOrderResponse) => {
+			events.emit('order:success', data);
+		})
+		.catch((err) => {
+			console.error(err);
+		});
+});
 
 events.on('order:success', (data: IOrderResponse) => {
-  modal.render({
-    content: success.render({
-      total: data.total
-    })
-  })
+	modal.render({
+		content: success.render({
+			total: data.total,
+		}),
+	});
 
-  orderData.reset();
-  basketData.reset();
-  formAddress.reset();
-  formContacts.reset();
-})
+	orderData.reset();
+	basketData.reset();
+	formAddress.reset();
+	formContacts.reset();
+});
 
 events.on('success:close', () => {
-  modal.close();
-})
+	modal.close();
+});
 
 events.on('order:changed', () => {
-  formAddress.buttonActive = orderData.payment;
-  formAddress.inputValues = {
-    payment: orderData.payment,
-    address: orderData.address
-  }
-  formContacts.inputValues = {
-    email: orderData.email,
-    phone: orderData.phone
-  }
-})
+	formAddress.buttonActive = orderData.payment;
+	formAddress.inputValues = {
+		payment: orderData.payment,
+		address: orderData.address,
+	};
+	formContacts.inputValues = {
+		email: orderData.email,
+		phone: orderData.phone,
+	};
+});
 
 events.on('modal:open', () => {
 	page.locked(true);
