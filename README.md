@@ -298,6 +298,7 @@ type TSuccess = Pick<IOrderResponse, 'total'>;
 
 Методы класса:
 
+- `disableButton(value: boolean)` - установить аттрибут disable элементу `_button`
 - Геттеры и сеттеры для установления и получения значений полей класса
 
 #### Класс Basket
