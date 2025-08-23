@@ -316,6 +316,7 @@ type TSuccess = Pick<IOrderResponse, 'total'>;
 Методы класса:
 
 - `indexing(): void` - индексирует элементы списка \_list
+- `handleScrollStyles(): void` - изменяет стили при появлении скроллбара
 - Сеттеры для установления значений полей класса
 
 #### Класс OrderForm
