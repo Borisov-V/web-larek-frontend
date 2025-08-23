@@ -39,6 +39,16 @@ export class Basket extends Component<IBasketView> {
 		}
 	}
 
+	handleScrollStyles(){
+		const scrollVisible = this._list.clientHeight < this._list.scrollHeight;
+
+		if (scrollVisible) {
+			this._list.classList.add('basket__list-scroll');
+		} else {
+			this._list.classList.add('basket__list-scroll');
+		}
+	}
+
 	set items(items: HTMLElement[]) {
 		this._list.replaceChildren(...items);
 		this.indexing();

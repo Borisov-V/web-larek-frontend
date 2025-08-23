@@ -103,6 +103,8 @@ events.on('basket:open', () => {
 	modal.render({
 		content: basket.render(),
 	});
+
+	basket.handleScrollStyles()
 });
 
 events.on('basket:changed', () => {
@@ -126,6 +128,8 @@ events.on('basket:changed', () => {
 	if (basketData.getItemsCount() < 1) {
 		orderData.reset();
 	}
+
+	basket.handleScrollStyles()
 });
 
 events.on('card:unselect', (item: IProductItem) => {
